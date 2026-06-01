@@ -23,18 +23,10 @@ if "uploader_key" not in st.session_state:
 
 
 def limpiar_app():
-    """Limpia el PDF subido y el resultado generado de la app."""
     st.session_state.resultado = None
     st.session_state.json_bytes = None
     st.session_state.pdf_procesado = False
-
-    # Limpia el file_uploader cambiando la key
     st.session_state.uploader_key += 1
-
-    # Si el widget existe en session_state, lo quitamos
-    uploader_widget_key = f"pdf_uploader_{st.session_state.uploader_key - 1}"
-    if uploader_widget_key in st.session_state:
-        del st.session_state[uploader_widget_key]
 
 
 st.title("📄 PDF → JSON (Base64 por página)")
@@ -46,10 +38,12 @@ uploaded_file = st.file_uploader(
 )
 
 # -----------------------------
-# Procesado del PDF
+# PROCESAR PDF
 # -----------------------------
 if uploaded_file is not None and not st.session_state.pdf_procesado:
+
     with st.spinner("Procesando PDF... ⏳", show_time=True):
+
         reader = PdfReader(uploaded_file)
         total_paginas = len(reader.pages)
 
@@ -58,6 +52,7 @@ if uploaded_file is not None and not st.session_state.pdf_procesado:
         progress_text = st.empty()
 
         for i, page in enumerate(reader.pages):
+
             writer = PdfWriter()
             writer.add_page(page)
 
@@ -79,37 +74,32 @@ if uploaded_file is not None and not st.session_state.pdf_procesado:
         progress_bar.empty()
         progress_text.empty()
 
-        st.session_state.resultado = {
+        resultado = {
             "total_paginas": total_paginas,
             "paginas": paginas
         }
+
+        st.session_state.resultado = resultado
+        st.session_state.json_bytes = json.dumps(resultado).encode("utf-8")
         st.session_state.pdf_procesado = True
 
     st.success("✅ PDF procesado correctamente")
-    st.write(f"Total de páginas: {st.session_state.resultado['total_paginas']}")
+    st.write(f"Total de páginas: {total_paginas}")
 
 # -----------------------------
-# Preparación de la descarga
+# DESCARGA + LIMPIEZA
 # -----------------------------
-if st.session_state.resultado is not None:
-    if st.session_state.json_bytes is None:
-        if st.button("📦 Preparar descarga"):
-            with st.spinner("Preparando JSON para descarga... ⏳", show_time=True):
-                st.session_state.json_bytes = json.dumps(
-                    st.session_state.resultado,
-                    ensure_ascii=False
-                ).encode("utf-8")
+if st.session_state.pdf_procesado:
 
-            st.success("✅ Descarga preparada")
+    # Spinner justo antes de descargar (UX simulada)
+    if st.button("📥 Preparar descarga y limpiar"):
+        with st.spinner("Preparando descarga... ⏳"):
+            pass  # solo UX, no bloquea realmente
 
-    # -----------------------------
-    # Botón de descarga + limpieza
-    # -----------------------------
-    if st.session_state.json_bytes is not None:
-        st.download_button(
-            label="📥 Descargar JSON y limpiar",
-            data=st.session_state.json_bytes,
-            file_name="pdf_base64.json",
-            mime="application/json",
-            on_click=limpiar_app
-        )
+    st.download_button(
+        label="📥 Descargar JSON",
+        data=st.session_state.json_bytes,
+        file_name="pdf_base64.json",
+        mime="application/json",
+        on_click=limpiar_app
+    )
