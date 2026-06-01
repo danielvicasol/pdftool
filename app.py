@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import base64
 import io
-from pypdf import PdfReader, PdfWriter  # recomendado en lugar de PyPDF2
+from PyPDF2 import PdfReader, PdfWriter
 
 st.title("PDF → JSON (Base64 por página)")
 
