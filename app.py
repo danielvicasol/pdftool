@@ -2,9 +2,9 @@ import streamlit as st
 import json
 import base64
 import io
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter  # recomendado en lugar de PyPDF2
 
-st.title("PDF → JSON (páginas en Base64)")
+st.title("PDF → JSON (Base64 por página)")
 
 uploaded_file = st.file_uploader("Sube un PDF", type="pdf")
 
@@ -13,19 +13,15 @@ if uploaded_file is not None:
 
     paginas = []
 
-    # Procesar cada página
+    # Procesar páginas
     for i, page in enumerate(reader.pages):
         writer = PdfWriter()
         writer.add_page(page)
 
-        # Guardar la página en memoria (no en disco)
         buffer = io.BytesIO()
         writer.write(buffer)
 
-        # Convertir a bytes
         pdf_bytes = buffer.getvalue()
-
-        # Codificar a base64
         base64_page = base64.b64encode(pdf_bytes).decode("utf-8")
 
         paginas.append({
@@ -38,13 +34,16 @@ if uploaded_file is not None:
         "paginas": paginas
     }
 
-    # Mostrar JSON
-    st.json(resultado)
+    # ✅ SOLO info básica (no JSON completo)
+    st.success(f"PDF procesado correctamente ✅")
+    st.write(f"Total de páginas: {len(paginas)}")
 
-    # Descargar JSON
+    # ✅ BOTÓN DE DESCARGA (clave)
+    json_bytes = json.dumps(resultado).encode("utf-8")
+
     st.download_button(
         label="Descargar JSON",
-        data=json.dumps(resultado, indent=4),
+        data=json_bytes,
         file_name="pdf_base64.json",
         mime="application/json"
     )
